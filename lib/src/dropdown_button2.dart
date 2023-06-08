@@ -574,6 +574,7 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
     required this.dropdownStyle,
     required this.menuItemStyle,
     required this.searchData,
+    this.tapRegionGroupId,
   }) : itemHeights = menuItemStyle.customHeights ??
             List<double>.filled(items.length, menuItemStyle.height);
 
@@ -587,6 +588,7 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
   final DropdownStyleData dropdownStyle;
   final MenuItemStyleData menuItemStyle;
   final DropdownSearchData<T>? searchData;
+  final Object? tapRegionGroupId;
 
   final List<double> itemHeights;
   ScrollController? scrollController;
@@ -604,6 +606,13 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
   final String? barrierLabel;
 
   @override
+  Widget buildModalBarrier() {
+    return tapRegionGroupId == null
+      ? super.buildModalBarrier()
+      : TapRegion(groupId: tapRegionGroupId, child: super.buildModalBarrier() );
+  }
+
+  @override
   Widget buildPage(BuildContext context, Animation<double> animation,
       Animation<double> secondaryAnimation) {
     return LayoutBuilder(
@@ -619,15 +628,29 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
         return ValueListenableBuilder<Rect?>(
           valueListenable: buttonRect,
           builder: (context, rect, _) {
-            return _DropdownRoutePage<T>(
-              route: this,
-              constraints: actualConstraints,
-              mediaQueryPadding: mediaQueryPadding,
-              buttonRect: rect!,
-              selectedIndex: selectedIndex,
-              capturedThemes: capturedThemes,
-              style: style,
-              enableFeedback: enableFeedback,
+            return tapRegionGroupId == null
+              ? _DropdownRoutePage<T>(
+                route: this,
+                constraints: actualConstraints,
+                mediaQueryPadding: mediaQueryPadding,
+                buttonRect: rect!,
+                selectedIndex: selectedIndex,
+                capturedThemes: capturedThemes,
+                style: style,
+                enableFeedback: enableFeedback,
+              )
+              : TapRegion(
+                groupId: tapRegionGroupId,
+                child: _DropdownRoutePage<T>(
+                  route: this,
+                  constraints: actualConstraints,
+                  mediaQueryPadding: mediaQueryPadding,
+                  buttonRect: rect!,
+                  selectedIndex: selectedIndex,
+                  capturedThemes: capturedThemes,
+                  style: style,
+                  enableFeedback: enableFeedback,
+                ),
             );
           },
         );
@@ -991,6 +1014,7 @@ class DropdownButton2<T> extends StatefulWidget {
     this.barrierDismissible = true,
     this.barrierColor,
     this.barrierLabel,
+    this.tapRegionGroupId,
     // When adding new arguments, consider adding similar arguments to
     // DropdownButtonFormField.
   })  : assert(
@@ -1042,6 +1066,7 @@ class DropdownButton2<T> extends StatefulWidget {
     this.barrierDismissible = true,
     this.barrierColor,
     this.barrierLabel,
+    this.tapRegionGroupId,
     this.formFieldCallBack,
   })  : assert(
           items == null ||
@@ -1229,6 +1254,13 @@ class DropdownButton2<T> extends StatefulWidget {
   /// If the barrier is dismissible, this label will be read out if
   /// accessibility tools (like VoiceOver on iOS) focus on the barrier.
   final String? barrierLabel;
+
+  /// The TapRegion groupId parameter to apply to the dropdown.
+  ///
+  /// When a groupId is provided the dropdown and barrier are augmented
+  /// with a TapRegion widget that specifies the groupId.
+  /// Allows extending a TapRegion from the button to the resulting dropdown.
+  final Object? tapRegionGroupId;
 
   /// Called when the dropdown menu is opened or closed in case of using
   /// DropdownButtonFormField2 to update the FormField's focus.
@@ -1427,6 +1459,7 @@ class DropdownButton2State<T> extends State<DropdownButton2<T>>
       dropdownStyle: dropdownStyle,
       menuItemStyle: menuItemStyle,
       searchData: searchData,
+      tapRegionGroupId: widget.tapRegionGroupId,
     );
 
     _isMenuOpen = true;
